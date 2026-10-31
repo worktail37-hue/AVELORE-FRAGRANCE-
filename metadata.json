@@ -1,0 +1,8 @@
+{
+  "name": "Remix AVELORE — Haute Parfumerie",
+  "description": "Scent, composed with intention. Discover fine fragrances, body \u0026 bath, home scents, and botanical beauty from Avelore.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

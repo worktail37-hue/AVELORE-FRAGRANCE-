@@ -1,0 +1,9 @@
+# https://www.robotstxt.org/robotstxt.html
+User-agent: *
+Allow: /
+
+# Exclude private patron modals and API paths
+Disallow: /api/
+
+# Sitemap location
+Sitemap: https://YOUR-DOMAIN.com/sitemap.xml

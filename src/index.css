@@ -1,0 +1,122 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Syne", "Playfair Display", Georgia, serif;
+  --font-serif: "Playfair Display", Georgia, serif;
+  --font-sans: "Plus Jakarta Sans", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  --color-merlot: #3B0000;
+  --color-merlot-deep: #220000;
+  --color-merlot-light: #520909;
+  --color-merlot-glow: #701111;
+  --color-apricot: #FFD482;
+  --color-apricot-light: #FFE6B3;
+  --color-apricot-soft: #FFF5E3;
+  --color-surface: #FAF2E1;
+  --color-card: #FFFBF5;
+  --color-ink: #3B0000;
+  --color-muted: #7E4A4A;
+}
+
+:root {
+  --ease-luxury: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Custom smooth scroll & selection */
+html {
+  font-family: var(--font-sans);
+  background-color: #FAF2E1;
+  color: #3B0000;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  scroll-behavior: smooth;
+}
+
+/* Micro animations */
+@keyframes spinSlow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes floatGentle {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-14px) rotate(1.2deg);
+  }
+}
+
+@keyframes floatShadow {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.35;
+  }
+  50% {
+    transform: scale(0.85);
+    opacity: 0.2;
+  }
+}
+
+@keyframes marqueeSlide {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-spin-slow {
+  animation: spinSlow 24s linear infinite;
+}
+
+.animate-float {
+  animation: floatGentle 6s ease-in-out infinite;
+}
+
+.animate-float-shadow {
+  animation: floatShadow 6s ease-in-out infinite;
+}
+
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: marqueeSlide 35s linear infinite;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #FAF2E1;
+}
+::-webkit-scrollbar-thumb {
+  background: #FFD482;
+  border-radius: 9999px;
+  border: 1px solid #3B0000;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3B0000;
+}
+
+/* Accessible focus outline */
+*:focus-visible {
+  outline: 2px solid #FFD482;
+  outline-offset: 2px;
+}
+
+/* Display font class */
+.font-display {
+  font-family: var(--font-display);
+}

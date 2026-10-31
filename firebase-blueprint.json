@@ -1,0 +1,236 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Represents an authenticated patron of Avelore with extended olfactory preferences.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique auth UID."
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "Patron contact email."
+        },
+        "displayName": {
+          "type": "string",
+          "description": "Patron display name."
+        },
+        "photoURL": {
+          "type": "string",
+          "description": "Avatar URL."
+        },
+        "role": {
+          "type": "string",
+          "enum": ["patron", "owner", "admin"],
+          "description": "User role authorization level."
+        },
+        "isAdmin": {
+          "type": "boolean",
+          "description": "Administrative authority flag."
+        },
+        "favoriteProductIds": {
+          "type": "array",
+          "description": "List of favorite perfume product IDs."
+        },
+        "favoriteProductNames": {
+          "type": "array",
+          "description": "List of favorite perfume product titles."
+        },
+        "preferredOlfactoryFamily": {
+          "type": "string",
+          "description": "Preferred scent category (e.g. Amber, Floral, Woody, Citrus)."
+        },
+        "olfactoryNotes": {
+          "type": "string",
+          "description": "Personal scent preferences or bespoke requests."
+        },
+        "lastLoginAt": {
+          "type": "string",
+          "description": "ISO timestamp of last sign in."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "ISO creation timestamp."
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "ISO updated timestamp."
+        }
+      },
+      "required": ["id", "email", "createdAt"]
+    },
+    "Consultation": {
+      "title": "Consultation",
+      "description": "Private atelier fragrance consultation booking.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique booking ID."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Auth UID of the patron."
+        },
+        "clientName": {
+          "type": "string",
+          "description": "Client full name."
+        },
+        "clientEmail": {
+          "type": "string",
+          "format": "email",
+          "description": "Client email address."
+        },
+        "boutique": {
+          "type": "string",
+          "description": "Selected boutique salon."
+        },
+        "date": {
+          "type": "string",
+          "description": "Preferred appointment date."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Olfactory profile or consultation notes."
+        },
+        "savedFragrancesSummary": {
+          "type": "string",
+          "description": "Summary of patron's saved fragrance wardrobe at booking time."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["requested", "confirmed", "completed"],
+          "description": "Status of the appointment."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "ISO creation timestamp."
+        }
+      },
+      "required": ["id", "userId", "clientName", "clientEmail", "boutique", "status", "createdAt"]
+    },
+    "Enquiry": {
+      "title": "Enquiry",
+      "description": "General customer inquiry or bespoke fragrance inquiry.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique enquiry ID."
+        },
+        "clientName": {
+          "type": "string",
+          "description": "Client name."
+        },
+        "clientEmail": {
+          "type": "string",
+          "format": "email",
+          "description": "Client email."
+        },
+        "clientPhone": {
+          "type": "string",
+          "description": "Optional contact number."
+        },
+        "subject": {
+          "type": "string",
+          "description": "Topic of enquiry."
+        },
+        "message": {
+          "type": "string",
+          "description": "Message details."
+        },
+        "userId": {
+          "type": "string",
+          "description": "Optional authenticated UID."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["new", "replied", "archived"],
+          "description": "Status of enquiry."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "ISO creation timestamp."
+        }
+      },
+      "required": ["id", "clientName", "clientEmail", "message", "status", "createdAt"]
+    },
+    "SharedMoodboard": {
+      "title": "SharedMoodboard",
+      "description": "Publicly shared visual fragrance moodboard collage.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique moodboard ID."
+        },
+        "themeTitle": {
+          "type": "string",
+          "description": "Title of the moodboard."
+        },
+        "imageUrl": {
+          "type": "string",
+          "description": "Collage image URL or data."
+        },
+        "isFallbackImage": {
+          "type": "boolean",
+          "description": "Whether fallback asset was used."
+        },
+        "poeticNarrative": {
+          "type": "string",
+          "description": "Narrative poem or description."
+        },
+        "colorPalette": {
+          "type": "array",
+          "description": "Extracted color swatches."
+        },
+        "sensoryElements": {
+          "type": "array",
+          "description": "Tactile sensory accords."
+        },
+        "inspiration": {
+          "type": "object",
+          "description": "Scent family and atmosphere choices."
+        },
+        "matchedPerfumes": {
+          "type": "array",
+          "description": "List of matched perfumes."
+        },
+        "authorName": {
+          "type": "string",
+          "description": "Creator display name or Patron."
+        },
+        "authorId": {
+          "type": "string",
+          "description": "UID of creator if signed in."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "ISO timestamp."
+        }
+      },
+      "required": ["id", "themeTitle", "imageUrl", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "Patron profiles and fragrance bookmarks."
+    },
+    "/consultations/{consultationId}": {
+      "schema": "Consultation",
+      "description": "Private fragrance consultation appointments."
+    },
+    "/enquiries/{enquiryId}": {
+      "schema": "Enquiry",
+      "description": "Inbound bespoke fragrance enquiries."
+    },
+    "/moodboards/{moodboardId}": {
+      "schema": "SharedMoodboard",
+      "description": "Publicly accessible shared fragrance moodboard collages."
+    }
+  }
+}

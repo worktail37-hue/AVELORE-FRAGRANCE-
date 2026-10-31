@@ -1,0 +1,175 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Authenticated users with verified 'owner' or 'admin' role (custom claims or verified owner email)
+    function isOwnerRole() {
+      return isSignedIn() && (
+        (request.auth.token.email == 'worktail37@gmail.com' && request.auth.token.email_verified == true) ||
+        (request.auth.token.admin == true || request.auth.token.isAdmin == true || request.auth.token.role in ['owner', 'admin'])
+      );
+    }
+
+    function isAdmin() {
+      return isOwnerRole();
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // User Profile Document Validation
+    function isValidUser(data, userId) {
+      return data.id == userId &&
+        data.email is string && data.email.size() <= 256 &&
+        (!('displayName' in data) || (data.displayName is string && data.displayName.size() <= 128)) &&
+        (!('photoURL' in data) || (data.photoURL is string && data.photoURL.size() <= 512)) &&
+        (!('role' in data) || (data.role in ['patron', 'owner', 'admin'])) &&
+        (!('isAdmin' in data) || (data.isAdmin is bool)) &&
+        (!('olfactoryNotes' in data) || (data.olfactoryNotes is string && data.olfactoryNotes.size() <= 2000)) &&
+        (!('preferredOlfactoryFamily' in data) || (data.preferredOlfactoryFamily is string && data.preferredOlfactoryFamily.size() <= 64)) &&
+        (!('favoriteProductIds' in data) || (data.favoriteProductIds is list && data.favoriteProductIds.size() <= 100)) &&
+        (!('favoriteProductNames' in data) || (data.favoriteProductNames is list && data.favoriteProductNames.size() <= 100)) &&
+        (!('lastLoginAt' in data) || (data.lastLoginAt is string && data.lastLoginAt.size() <= 64)) &&
+        data.createdAt is string && data.createdAt.size() <= 64;
+    }
+
+    // Consultation Document Validation
+    function isValidConsultation(data, consultationId) {
+      return data.id == consultationId &&
+        data.userId == request.auth.uid &&
+        data.clientName is string && data.clientName.size() > 0 && data.clientName.size() <= 128 &&
+        data.clientEmail is string && data.clientEmail.size() > 0 && data.clientEmail.size() <= 256 &&
+        data.boutique is string && data.boutique.size() <= 128 &&
+        (!('date' in data) || (data.date is string && data.date.size() <= 64)) &&
+        (!('notes' in data) || (data.notes is string && data.notes.size() <= 2000)) &&
+        (!('savedFragrancesSummary' in data) || (data.savedFragrancesSummary is string && data.savedFragrancesSummary.size() <= 2000)) &&
+        data.status in ['requested', 'confirmed', 'completed'] &&
+        data.createdAt is string && data.createdAt.size() <= 64;
+    }
+
+    // Enquiry Document Validation
+    function isValidEnquiry(data, enquiryId) {
+      return data.id == enquiryId &&
+        data.clientName is string && data.clientName.size() > 0 && data.clientName.size() <= 128 &&
+        data.clientEmail is string && data.clientEmail.size() > 0 && data.clientEmail.size() <= 256 &&
+        (!('clientPhone' in data) || (data.clientPhone is string && data.clientPhone.size() <= 32)) &&
+        (!('subject' in data) || (data.subject is string && data.subject.size() <= 256)) &&
+        data.message is string && data.message.size() > 0 && data.message.size() <= 2000 &&
+        (!('userId' in data) || (data.userId is string && data.userId.size() <= 128)) &&
+        data.status in ['new', 'replied', 'archived'] &&
+        data.createdAt is string && data.createdAt.size() <= 64;
+    }
+
+    // Moodboard Document Validation
+    function isValidMoodboard(data, moodboardId) {
+      return data.id == moodboardId &&
+        data.themeTitle is string && data.themeTitle.size() > 0 && data.themeTitle.size() <= 256 &&
+        data.imageUrl is string && data.imageUrl.size() > 0 &&
+        (!('poeticNarrative' in data) || (data.poeticNarrative is string && data.poeticNarrative.size() <= 3000)) &&
+        (!('authorName' in data) || (data.authorName is string && data.authorName.size() <= 128)) &&
+        (!('authorId' in data) || (data.authorId is string && data.authorId.size() <= 128)) &&
+        (!('isFallbackImage' in data) || (data.isFallbackImage is bool)) &&
+        (!('colorPalette' in data) || (data.colorPalette is list && data.colorPalette.size() <= 10)) &&
+        (!('sensoryElements' in data) || (data.sensoryElements is list && data.sensoryElements.size() <= 20)) &&
+        (!('matchedPerfumes' in data) || (data.matchedPerfumes is list && data.matchedPerfumes.size() <= 10)) &&
+        data.createdAt is string && data.createdAt.size() <= 64;
+    }
+
+    // Match users
+    match /users/{userId} {
+      allow get: if isSignedIn() && (request.auth.uid == userId || isOwnerRole());
+      allow list: if isOwnerRole();
+      allow create: if isSignedIn() && isOwner(userId) && isValidId(userId) &&
+                    isValidUser(request.resource.data, userId) &&
+                    (!('isAdmin' in request.resource.data) || request.resource.data.isAdmin == false || isOwnerRole()) &&
+                    (!('role' in request.resource.data) || request.resource.data.role == 'patron' || isOwnerRole()) &&
+                    request.resource.data.keys().hasAll(['id', 'email', 'createdAt']) &&
+                    request.resource.data.keys().hasOnly(['id', 'email', 'displayName', 'photoURL', 'role', 'isAdmin', 'favoriteProductIds', 'favoriteProductNames', 'preferredOlfactoryFamily', 'olfactoryNotes', 'lastLoginAt', 'createdAt', 'updatedAt']);
+      allow update: if isSignedIn() && isOwner(userId) && isValidId(userId) &&
+                    isValidUser(request.resource.data, userId) &&
+                    request.resource.data.id == resource.data.id &&
+                    request.resource.data.createdAt == resource.data.createdAt &&
+                    request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName', 'photoURL', 'favoriteProductIds', 'favoriteProductNames', 'preferredOlfactoryFamily', 'olfactoryNotes', 'lastLoginAt', 'updatedAt']);
+      allow delete: if false;
+    }
+
+    // Match consultations
+    match /consultations/{consultationId} {
+      allow get: if isSignedIn() && (resource.data.userId == request.auth.uid || isOwnerRole());
+      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || isOwnerRole());
+      allow create: if isSignedIn() && isValidId(consultationId) &&
+                    isValidConsultation(request.resource.data, consultationId) &&
+                    (request.resource.data.status == 'requested' || isOwnerRole()) &&
+                    request.resource.data.keys().hasAll(['id', 'userId', 'clientName', 'clientEmail', 'boutique', 'status', 'createdAt']) &&
+                    request.resource.data.keys().hasOnly(['id', 'userId', 'clientName', 'clientEmail', 'boutique', 'date', 'notes', 'savedFragrancesSummary', 'status', 'createdAt']);
+      allow update: if isSignedIn() && (resource.data.userId == request.auth.uid || isOwnerRole()) &&
+                    request.resource.data.userId == resource.data.userId &&
+                    request.resource.data.id == resource.data.id &&
+                    (
+                      (!isOwnerRole() && request.resource.data.status == resource.data.status && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['boutique', 'date', 'notes', 'savedFragrancesSummary'])) ||
+                      (isOwnerRole() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['boutique', 'date', 'notes', 'savedFragrancesSummary', 'status']))
+                    );
+      allow delete: if isSignedIn() && (resource.data.userId == request.auth.uid || isOwnerRole());
+    }
+
+    // Match enquiries (Zero guest access; only authenticated users with owner role can read their own or site-wide enquiries)
+    match /enquiries/{enquiryId} {
+      // Only allow authenticated users with an 'owner' role to read their own or site-wide enquiries
+      allow get: if isOwnerRole();
+      allow list: if isOwnerRole();
+
+      // Ensure no guest access is permitted; authenticated users can only create their own enquiry with status 'new'
+      allow create: if isSignedIn() &&
+                    isValidId(enquiryId) &&
+                    isValidEnquiry(request.resource.data, enquiryId) &&
+                    (request.resource.data.status == 'new' || isOwnerRole()) &&
+                    (!('userId' in request.resource.data) || request.resource.data.userId == request.auth.uid) &&
+                    request.resource.data.keys().hasAll(['id', 'clientName', 'clientEmail', 'message', 'status', 'createdAt']) &&
+                    request.resource.data.keys().hasOnly(['id', 'clientName', 'clientEmail', 'clientPhone', 'subject', 'message', 'userId', 'status', 'createdAt']);
+
+      // Only owner role can update status
+      allow update: if isOwnerRole() &&
+                    request.resource.data.id == resource.data.id &&
+                    request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
+
+      // Only owner role can delete enquiries
+      allow delete: if isOwnerRole();
+    }
+
+    // Match publicly shared moodboards
+    match /moodboards/{moodboardId} {
+      // Anyone with the unique public URL can view the shared moodboard
+      allow get: if true;
+      // Listing is restricted to owner role to prevent bulk scraping
+      allow list: if isOwnerRole();
+      // Anyone can create a public shared moodboard
+      allow create: if isValidId(moodboardId) &&
+                    isValidMoodboard(request.resource.data, moodboardId) &&
+                    request.resource.data.keys().hasAll(['id', 'themeTitle', 'imageUrl', 'createdAt']) &&
+                    request.resource.data.keys().hasOnly(['id', 'themeTitle', 'imageUrl', 'isFallbackImage', 'poeticNarrative', 'colorPalette', 'sensoryElements', 'inspiration', 'matchedPerfumes', 'authorName', 'authorId', 'createdAt']);
+      allow update: if isOwnerRole() || (isSignedIn() && resource.data.authorId == request.auth.uid);
+      allow delete: if isOwnerRole() || (isSignedIn() && resource.data.authorId == request.auth.uid);
+    }
+
+    // Match maison private owner settings (strictly owner-only)
+    match /settings/{docId} {
+      allow read, write: if isOwnerRole();
+    }
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
